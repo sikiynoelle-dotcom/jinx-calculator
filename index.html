@@ -125,8 +125,11 @@
     <script>
         const products = [
             { name: "트라이엄프 아크릴 스탠드", category: "壓克力立牌", price: 28000, limit: 5 },
-            { name: "데이트 아크릴 스탠드 (재경/단)", category: "壓克力立牌", price: 19000, limit: 5 },
-            { name: "어린이 아크릴 스탠드 (재경/단)", category: "壓克力立牌", price: 12000, limit: 5 },
+            // 將原本合併的項目拆分為 宰경 與 丹 兩項
+            { name: "데이트 아크릴 스탠드 (재경)", category: "壓克力立牌", price: 19000, limit: 5, isSplit: true },
+            { name: "데이트 아크릴 스탠드 (단)", category: "壓克力立牌", price: 19000, limit: 5, isSplit: true, imgIndex: 1 },
+            { name: "어린이 아크릴 스탠드 (재경)", category: "壓克力立牌", price: 12000, limit: 5, isSplit: true },
+            { name: "어린이 아크릴 스탠드 (단)", category: "壓克力立牌", price: 12000, limit: 5, isSplit: true, imgIndex: 2 },
             { name: "밍그래 아크릴 블록", category: "飯友(韓國限定)", price: 15000, limit: 3 },
             { name: "컬렉션 포토카드 ver.3 [랜덤]", category: "小卡, 盲抽", price: 5000, limit: 20 },
             { name: "컬렉션 미니 블록 [랜덤]", category: "小壓克力, 盲抽", price: 6500, limit: 5 },
@@ -166,8 +169,17 @@
             const tbody = document.getElementById('productTableBody');
             tbody.innerHTML = '';
             
+            // 由於中間拆分了品項，圖片編號基於原本的順序對應調整
+            // 原本 idx=0: 001.jpg, idx=1 (데이트): 002.jpg, idx=2 (어린이): 003.jpg ...
+            // 這裡我們用一個對應的圖片檔案計算邏輯
             products.forEach((p, index) => {
-                const fileNum = String(index + 1).padStart(3, '0');
+                let originalIndex = index;
+                if (p.name === "데이트 아크릴 스탠드 (단)") originalIndex = 1;
+                if (p.name === "어린이 아크릴 스탠드 (재경)") originalIndex = 2;
+                if (p.name === "어린이 아크릴 스탠드 (단)") originalIndex = 2;
+                if (index > 3) originalIndex = index - 2; // 因為多插入了 2 個項目
+
+                const fileNum = String(originalIndex + 1).padStart(3, '0');
                 const imgFileName = `${fileNum}.jpg`;
 
                 const tr = document.createElement('tr');
@@ -291,18 +303,15 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     
-                    // 讀取第一個工作表
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     const json = XLSX.utils.sheet_to_json(worksheet);
 
-                    // 先將所有數量歸零
                     products.forEach((p, index) => {
                         document.getElementById(`qty_${index}`).value = 0;
                     });
 
                     let matchCount = 0;
-                    // 遍歷 Excel 的每一列，對應商品名稱填入數量
                     json.forEach(row => {
                         const name = row["商品名稱"];
                         const qty = parseInt(row["購買數量"]) || 0;
@@ -327,7 +336,6 @@
                     alert("讀取 Excel 檔案時發生錯誤，請確認檔案格式是否正確。");
                 }
                 
-                // 清空 input 讓重複上傳同個檔案也能觸發 onchange
                 event.target.value = '';
             };
             reader.readAsArrayBuffer(file);
