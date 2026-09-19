@@ -25,37 +25,37 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            opacity: 0.15; /* 數值越小越淡（0.1 ~ 0.3 之間最剛好） */
-            z-index: -1; /* 確保背景在所有內容的最底層 */
+            opacity: 0.2; /* 背景淡化程度：數值越小越淡 (0.1 ~ 0.3) */
+            z-index: -1; /* 確保背景在最底層 */
         }
     </style>
 </head>
 <body class="text-slate-800 py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
-        <!-- 頁面標題 -->
-        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <!-- 頁面標題（半透明毛玻璃效果） -->
+        <div class="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">✨ Jinx 週邊商品預購計算表</h1>
-                <p class="text-sm text-slate-500 mt-1">請在下方欄位輸入您想要的購買數量，系統將自動幫您即時計算總金額與檢查限購數量。</p>
+                <p class="text-sm text-slate-600 mt-1">請在下方欄位輸入您想要的購買數量，系統將自動幫您即時計算總金額與檢查限購數量。</p>
             </div>
             <!-- 總金額顯示卡片 -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-xl px-6 py-3 flex items-center gap-4">
+            <div class="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100/60 rounded-xl px-6 py-3 flex items-center gap-4">
                 <div>
                     <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
                     <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
                 </div>
-                <button onclick="resetForm()" class="bg-white hover:bg-indigo-100 text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
+                <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
                     清除全部
                 </button>
             </div>
         </div>
 
-        <!-- 商品表格卡片 (稍微加上半透明毛玻璃效果，讓背景更有質感) -->
-        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- 商品表格卡片（半透明毛玻璃效果） -->
+        <div class="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100/80 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                        <tr class="bg-slate-100/60 text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200/60">
                             <th class="py-3 px-4 font-semibold w-20 text-center">商品圖</th>
                             <th class="py-3 px-4 font-semibold">商品名稱</th>
                             <th class="py-3 px-4 font-semibold">類別</th>
@@ -65,14 +65,14 @@
                             <th class="py-3 px-4 font-semibold text-right">單項總價</th>
                         </tr>
                     </thead>
-                    <tbody id="productTableBody" class="divide-y divide-slate-100 text-sm">
+                    <tbody id="productTableBody" class="divide-y divide-slate-200/40 text-sm">
                         <!-- 動態生成商品列 -->
                     </tbody>
                 </table>
             </div>
         </div>
         
-        <div class="text-center text-xs text-slate-500 mt-6">
+        <div class="text-center text-xs text-slate-500 mt-6 font-medium drop-shadow-sm">
             本網頁僅供個人試算使用，所有輸入資料皆僅存於您的裝置中，不會發送或回傳至任何伺服器。
         </div>
     </div>
@@ -122,21 +122,21 @@
                 const imgFileName = `${fileNum}.jpg`;
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/50 transition-colors";
+                tr.className = "hover:bg-white/40 transition-colors";
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-center">
-                        <img src="${imgFileName}" alt="${p.name}" class="w-12 h-12 object-cover rounded-lg mx-auto border border-slate-200 shadow-sm" onerror="this.src='https://via.placeholder.com/48?text=No+Img'">
+                        <img src="${imgFileName}" alt="${p.name}" class="w-12 h-12 object-cover rounded-lg mx-auto border border-slate-200/60 shadow-sm" onerror="this.src='https://via.placeholder.com/48?text=No+Img'">
                     </td>
                     <td class="py-3 px-4 font-medium text-slate-800">${p.name}</td>
-                    <td class="py-3 px-4 text-slate-500">${p.category}</td>
-                    <td class="py-3 px-4 text-right text-slate-600">${p.price.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-slate-600">${p.category}</td>
+                    <td class="py-3 px-4 text-right text-slate-700">${p.price.toLocaleString()}</td>
                     <td class="py-3 px-4 text-center">
                         <input type="number" id="qty_${index}" min="0" max="${p.limit}" value="0" 
                             oninput="calculateTotal()" 
-                            class="w-20 text-center border border-slate-300 rounded-lg py-1 px-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                            class="w-20 text-center border border-slate-300 rounded-lg py-1 px-2 bg-white/90 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
                     </td>
-                    <td class="py-3 px-4 text-center text-slate-400 text-xs">${p.limit}</td>
-                    <td id="subtotal_${index}" class="py-3 px-4 text-right font-semibold text-slate-700">0</td>
+                    <td class="py-3 px-4 text-center text-slate-500 text-xs">${p.limit}</td>
+                    <td id="subtotal_${index}" class="py-3 px-4 text-right font-semibold text-slate-800">0</td>
                 `;
                 tbody.appendChild(tr);
             });
