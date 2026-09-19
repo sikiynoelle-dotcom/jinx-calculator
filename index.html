@@ -6,7 +6,7 @@
     <title>Jinx 週邊商品預購計算表</title>
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 SheetJS (xlsx) 用於前端直接生成 Excel 檔 -->
+    <!-- 引入 SheetJS (xlsx) 用於前端讀取與生成 Excel 檔 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -68,10 +68,15 @@
                         <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
                         <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
                     </div>
-                    <!-- 按鈕群組：清除與匯出 Excel -->
+                    <!-- 按鈕群組：清除、匯入、匯出 Excel -->
                     <div class="flex flex-col gap-1.5">
                         <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
                             清除全部
+                        </button>
+                        <!-- 隱藏的檔案上傳 input -->
+                        <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="importExcel(event)">
+                        <button onclick="document.getElementById('excelFile').click()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1 rounded-lg transition font-medium shadow-sm flex items-center justify-center gap-1">
+                            📂 匯入 Excel
                         </button>
                         <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1 rounded-lg transition font-medium shadow-sm flex items-center justify-center gap-1">
                             📊 匯出 Excel
@@ -231,7 +236,6 @@
         }
 
         function exportExcel() {
-            // 收集有購買的商品資料
             let excelData = [];
             let hasItem = false;
 
@@ -255,30 +259,78 @@
                 return;
             }
 
-            // 在下方加入空白行與結算資訊
-            excelData.push({}); // 空白行
+            excelData.push({});
             excelData.push({ "商品名稱": "=== 結算資訊 ===" });
             excelData.push({ "商品名稱": "總金額 (KRW)", "類別": currentGrandTotal });
             excelData.push({ "商品名稱": "5萬滿額親密相卡", "類別": `${currentGift5w} 張` });
             excelData.push({ "商品名稱": "10萬滿額小卡+透卡組", "類別": `${currentGift10w} 組` });
 
-            // 利用 SheetJS 建立工作表
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "預購清單");
 
-            // 調整欄位寬度讓 Excel 更美觀
             const colWidths = [
-                {wch: 35}, // 商品名稱
-                {wch: 15}, // 類別
-                {wch: 15}, // 單價
-                {wch: 10}, // 購買數量
-                {wch: 18}  // 單項總價
+                {wch: 35},
+                {wch: 15},
+                {wch: 15},
+                {wch: 10},
+                {wch: 18}
             ];
             worksheet['!cols'] = colWidths;
 
-            // 匯出下載 Excel 檔案
             XLSX.writeFile(workbook, "jinx_order_summary.xlsx");
+        }
+
+        function importExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 讀取第一個工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    // 先將所有數量歸零
+                    products.forEach((p, index) => {
+                        document.getElementById(`qty_${index}`).value = 0;
+                    });
+
+                    let matchCount = 0;
+                    // 遍歷 Excel 的每一列，對應商品名稱填入數量
+                    json.forEach(row => {
+                        const name = row["商品名稱"];
+                        const qty = parseInt(row["購買數量"]) || 0;
+
+                        if (name && qty > 0) {
+                            const productIndex = products.findIndex(p => p.name === name);
+                            if (productIndex !== -1) {
+                                document.getElementById(`qty_${productIndex}`).value = qty;
+                                matchCount++;
+                            }
+                        }
+                    });
+
+                    calculateTotal();
+                    if (matchCount > 0) {
+                        alert(`成功匯入！已自動載入 ${matchCount} 項商品的購買數量。`);
+                    } else {
+                        alert("未能識別檔案中的商品資料，請確認是否為正確的預購清單 Excel 檔。");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("讀取 Excel 檔案時發生錯誤，請確認檔案格式是否正確。");
+                }
+                
+                // 清空 input 讓重複上傳同個檔案也能觸發 onchange
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         renderTable();
