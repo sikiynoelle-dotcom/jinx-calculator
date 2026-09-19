@@ -6,6 +6,8 @@
     <title>Jinx 週邊商品預購計算表</title>
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 SheetJS (xlsx) 用於前端直接生成 Excel 檔 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -40,11 +42,11 @@
             top: 0;
             left: 0;
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            transform-origin: top left; /* 以左上角為基準往右下方放大 */
+            transform-origin: top left;
             z-index: 10;
         }
         .img-container img:hover {
-            transform: scale(3.5); /* 放大 3.5 倍 */
+            transform: scale(3.5);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
             z-index: 50;
             border-radius: 6px;
@@ -66,9 +68,15 @@
                         <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
                         <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
                     </div>
-                    <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
-                        清除全部
-                    </button>
+                    <!-- 按鈕群組：清除與匯出 Excel -->
+                    <div class="flex flex-col gap-1.5">
+                        <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
+                            清除全部
+                        </button>
+                        <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1 rounded-lg transition font-medium shadow-sm flex items-center justify-center gap-1">
+                            📊 匯出 Excel
+                        </button>
+                    </div>
                 </div>
                 <!-- 滿額贈品顯示區塊（分兩排） -->
                 <div class="border-t border-indigo-100/80 pt-2 flex flex-col gap-1.5 text-xs font-medium text-slate-700">
@@ -121,7 +129,7 @@
             { name: "캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
             { name: "어린이 캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
             { name: "경단스튜디오 데이트 사진팩 [랜덤]", category: "拍立得, 盲抽", price: 5000, limit: 20 },
-            { name: "MFC 주재경 선수 슬로건", category: "手幅", price: 18000, limit: 5 },
+            { name: "MFC 주재경 선수 슬로건", category: "手幅, 盲抽", price: 18000, limit: 5 },
             { name: "주재경 글러브 키링", category: "吊飾", price: 21000, limit: 3 },
             { name: "주재경의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
             { name: "김단의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
@@ -144,6 +152,10 @@
             { name: "팀블랙 폴로 셔츠", category: "衣服", price: 62000, limit: 3 },
             { name: "징크스 (1권/2권) 각", category: "書", price: 16200, limit: 3 }
         ];
+
+        let currentGrandTotal = 0;
+        let currentGift5w = 0;
+        let currentGift10w = 0;
 
         function renderTable() {
             const tbody = document.getElementById('productTableBody');
@@ -179,7 +191,7 @@
         }
 
         function calculateTotal() {
-            let grandTotal = 0;
+            currentGrandTotal = 0;
             products.forEach((p, index) => {
                 const qtyInput = document.getElementById(`qty_${index}`);
                 let qty = parseInt(qtyInput.value) || 0;
@@ -194,27 +206,21 @@
                 }
 
                 const subtotal = qty * p.price;
-                grandTotal += subtotal;
+                currentGrandTotal += subtotal;
                 
                 document.getElementById(`subtotal_${index}`).innerText = subtotal.toLocaleString();
             });
 
-            // 更新總金額
-            document.getElementById('grandTotal').innerText = grandTotal.toLocaleString();
+            document.getElementById('grandTotal').innerText = currentGrandTotal.toLocaleString();
 
-            // 計算滿額贈品邏輯
-            // 1. 5萬滿額親密相卡：滿5萬以上固定 1 張，否則 0 張
-            const gift5wCount = grandTotal >= 50000 ? 1 : 0;
-
-            // 2. 10萬滿額小卡+透卡組：每10萬1組，最多4組
-            let gift10wCount = Math.floor(grandTotal / 100000);
-            if (gift10wCount > 4) {
-                gift10wCount = 4;
+            currentGift5w = currentGrandTotal >= 50000 ? 1 : 0;
+            currentGift10w = Math.floor(currentGrandTotal / 100000);
+            if (currentGift10w > 4) {
+                currentGift10w = 4;
             }
 
-            // 更新贈品顯示文字與 Emoji
-            document.getElementById('gift5w').innerHTML = `<span>📷</span> <span>5萬滿額親密相卡：${gift5wCount} 張</span>`;
-            document.getElementById('gift10w').innerHTML = `<span>🃏</span> <span>10萬滿額小卡+透卡組：${gift10wCount} 組</span>`;
+            document.getElementById('gift5w').innerHTML = `<span>📷</span> <span>5萬滿額親密相卡：${currentGift5w} 張</span>`;
+            document.getElementById('gift10w').innerHTML = `<span>🃏</span> <span>10萬滿額小卡+透卡組：${currentGift10w} 組</span>`;
         }
 
         function resetForm() {
@@ -222,6 +228,57 @@
                 document.getElementById(`qty_${index}`).value = 0;
             });
             calculateTotal();
+        }
+
+        function exportExcel() {
+            // 收集有購買的商品資料
+            let excelData = [];
+            let hasItem = false;
+
+            products.forEach((p, index) => {
+                const qty = parseInt(document.getElementById(`qty_${index}`).value) || 0;
+                if (qty > 0) {
+                    hasItem = true;
+                    const subtotal = qty * p.price;
+                    excelData.push({
+                        "商品名稱": p.name,
+                        "類別": p.category,
+                        "單價 (KRW)": p.price,
+                        "購買數量": qty,
+                        "單項總價 (KRW)": subtotal
+                    });
+                }
+            });
+
+            if (!hasItem) {
+                alert("目前沒有選購任何商品喔！");
+                return;
+            }
+
+            // 在下方加入空白行與結算資訊
+            excelData.push({}); // 空白行
+            excelData.push({ "商品名稱": "=== 結算資訊 ===" });
+            excelData.push({ "商品名稱": "總金額 (KRW)", "類別": currentGrandTotal });
+            excelData.push({ "商品名稱": "5萬滿額親密相卡", "類別": `${currentGift5w} 張` });
+            excelData.push({ "商品名稱": "10萬滿額小卡+透卡組", "類別": `${currentGift10w} 組` });
+
+            // 利用 SheetJS 建立工作表
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "預購清單");
+
+            // 調整欄位寬度讓 Excel 更美觀
+            const colWidths = [
+                {wch: 35}, // 商品名稱
+                {wch: 15}, // 類別
+                {wch: 15}, // 單價
+                {wch: 10}, // 購買數量
+                {wch: 18}  // 單項總價
+            ];
+            worksheet['!cols'] = colWidths;
+
+            // 匯出下載 Excel 檔案
+            XLSX.writeFile(workbook, "jinx_order_summary.xlsx");
         }
 
         renderTable();
