@@ -124,8 +124,11 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/40 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3 px-4 text-center">
-                        <img src="${imgFileName}" alt="${p.name}" class="w-12 h-12 object-cover rounded-lg mx-auto border border-slate-200/60 shadow-sm" onerror="this.src='https://via.placeholder.com/48?text=No+Img'">
+                    <td class="py-3 px-4 text-center relative">
+                        <!-- 加入 hover 放大與浮動層級效果 -->
+                        <img src="${imgFileName}" alt="${p.name}" 
+                            class="w-12 h-12 object-cover rounded-lg mx-auto border border-slate-200/60 shadow-sm cursor-pointer transition-transform duration-300 ease-in-out hover:scale-[2.5] hover:shadow-xl relative z-10 origin-center" 
+                            onerror="this.src='https://via.placeholder.com/48?text=No+Img'">
                     </td>
                     <td class="py-3 px-4 font-medium text-slate-800">${p.name}</td>
                     <td class="py-3 px-4 text-slate-600">${p.category}</td>
