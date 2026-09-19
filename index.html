@@ -37,6 +37,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4 font-semibold w-20 text-center">商品圖</th>
                             <th class="py-3 px-4 font-semibold">商品名稱</th>
                             <th class="py-3 px-4 font-semibold">類別</th>
                             <th class="py-3 px-4 font-semibold text-right">單價</th>
@@ -99,9 +100,16 @@
             tbody.innerHTML = '';
             
             products.forEach((p, index) => {
+                // 將索引轉為三位數格式編號 (0 -> "001", 1 -> "002" ...)
+                const fileNum = String(index + 1).padStart(3, '0');
+                const imgFileName = `${fileNum}.jpg`;
+
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition-colors";
                 tr.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <img src="${imgFileName}" alt="${p.name}" class="w-12 h-12 object-cover rounded-lg mx-auto border border-slate-200 shadow-sm" onerror="this.src='https://via.placeholder.com/48?text=No+Img'">
+                    </td>
                     <td class="py-3 px-4 font-medium text-slate-800">${p.name}</td>
                     <td class="py-3 px-4 text-slate-500">${p.category}</td>
                     <td class="py-3 px-4 text-right text-slate-600">${p.price.toLocaleString()}</td>
