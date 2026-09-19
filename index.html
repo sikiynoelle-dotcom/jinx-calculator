@@ -46,7 +46,7 @@
         .img-container img:hover {
             transform: scale(3.5); /* 放大 3.5 倍 */
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-            z-index: 50; /* 確保在最最上層 */
+            z-index: 50;
             border-radius: 6px;
         }
     </style>
@@ -57,17 +57,28 @@
         <div class="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">✨ Jinx 週邊商品預購計算表</h1>
-                <p class="text-sm text-slate-600 mt-1">請在下方欄位輸入您想要的購買數量，系統將自動幫您即時計算總金額與檢查限購數量。</p>
+                <p class="text-sm text-slate-600 mt-1">請在下方欄位輸入您想要的購買數量，系統將自動幫您即時計算總金額、滿額贈品與檢查限購數量。</p>
             </div>
-            <!-- 總金額顯示卡片 -->
-            <div class="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100/60 rounded-xl px-6 py-3 flex items-center gap-4">
-                <div>
-                    <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
-                    <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
+            <!-- 總金額與滿額贈品顯示卡片 -->
+            <div class="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100/60 rounded-xl px-6 py-4 flex flex-col gap-3 min-w-[280px]">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
+                        <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
+                    </div>
+                    <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
+                        清除全部
+                    </button>
                 </div>
-                <button onclick="resetForm()" class="bg-white/80 hover:bg-white text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
-                    清除全部
-                </button>
+                <!-- 滿額贈品顯示區塊（分兩排） -->
+                <div class="border-t border-indigo-100/80 pt-2 flex flex-col gap-1.5 text-xs font-medium text-slate-700">
+                    <div id="gift5w" class="flex items-center gap-1.5">
+                        <span>📷</span> <span>5萬滿額親密相卡：0 張</span>
+                    </div>
+                    <div id="gift10w" class="flex items-center gap-1.5">
+                        <span>🃏</span> <span>10萬滿額小卡+透卡組：0 組</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -110,7 +121,7 @@
             { name: "캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
             { name: "어린이 캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
             { name: "경단스튜디오 데이트 사진팩 [랜덤]", category: "拍立得, 盲抽", price: 5000, limit: 20 },
-            { name: "MFC 주재경 선수 슬로건", category: "手幅, 盲抽", price: 18000, limit: 5 },
+            { name: "MFC 주재경 선수 슬로건", category: "手幅", price: 18000, limit: 5 },
             { name: "주재경 글러브 키링", category: "吊飾", price: 21000, limit: 3 },
             { name: "주재경의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
             { name: "김단의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
@@ -188,7 +199,22 @@
                 document.getElementById(`subtotal_${index}`).innerText = subtotal.toLocaleString();
             });
 
+            // 更新總金額
             document.getElementById('grandTotal').innerText = grandTotal.toLocaleString();
+
+            // 計算滿額贈品邏輯
+            // 1. 5萬滿額親密相卡：滿5萬以上固定 1 張，否則 0 張
+            const gift5wCount = grandTotal >= 50000 ? 1 : 0;
+
+            // 2. 10萬滿額小卡+透卡組：每10萬1組，最多4組
+            let gift10wCount = Math.floor(grandTotal / 100000);
+            if (gift10wCount > 4) {
+                gift10wCount = 4;
+            }
+
+            // 更新贈品顯示文字與 Emoji
+            document.getElementById('gift5w').innerHTML = `<span>📷</span> <span>5萬滿額親密相卡：${gift5wCount} 張</span>`;
+            document.getElementById('gift10w').innerHTML = `<span>🃏</span> <span>10萬滿額小卡+透卡組：${gift10wCount} 組</span>`;
         }
 
         function resetForm() {
