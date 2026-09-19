@@ -1,1 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jinx 週邊商品預購計算表</title>
+    <!-- 引入 Tailwind CSS 與 Google Fonts 確保高質感排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- 頁面標題 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">✨ Jinx 週邊商品預購計算表</h1>
+                <p class="text-sm text-slate-500 mt-1">請在下方欄位輸入您想要的購買數量，系統將自動幫您即時計算總金額與檢查限購數量。</p>
+            </div>
+            <!-- 總金額顯示卡片 -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl px-6 py-3 flex items-center gap-4">
+                <div>
+                    <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
+                    <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
+                </div>
+                <button onclick="resetForm()" class="bg-white hover:bg-indigo-100 text-indigo-600 text-xs px-3 py-1.5 rounded-lg border border-indigo-200 transition font-medium shadow-sm">
+                    清除全部
+                </button>
+            </div>
+        </div>
 
+        <!-- 商品表格卡片 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4 font-semibold">商品名稱</th>
+                            <th class="py-3 px-4 font-semibold">類別</th>
+                            <th class="py-3 px-4 font-semibold text-right">單價</th>
+                            <th class="py-3 px-4 font-semibold text-center">購買數量</th>
+                            <th class="py-3 px-4 font-semibold text-center">限購數量</th>
+                            <th class="py-3 px-4 font-semibold text-right">單項總價</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- 動態生成商品列 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="text-center text-xs text-slate-400 mt-6">
+            本網頁僅供個人試算使用，所有輸入資料皆僅存於您的裝置中，不會發送或回傳至任何伺服器。
+        </div>
+    </div>
+
+    <script>
+        // 對應您 Google 試算表的商品資料
+        const products = [
+            { name: "트라이엄프 아크릴 스탠드", category: "壓克力立牌", price: 28000, limit: 5 },
+            { name: "데이트 아크릴 스탠드 (재경/단)", category: "壓克力立牌", price: 19000, limit: 5 },
+            { name: "어린이 아크릴 스탠드 (재경/단)", category: "壓克力立牌", price: 12000, limit: 5 },
+            { name: "밍그래 아크릴 블록", category: "飯友(韓國限定)", price: 15000, limit: 3 },
+            { name: "컬렉션 포토카드 ver.3 [랜덤]", category: "小卡, 盲抽", price: 5000, limit: 20 },
+            { name: "컬렉션 미니 블록 [랜덤]", category: "小壓克力, 盲抽", price: 6500, limit: 5 },
+            { name: "컬렉션 미니 스탠드 [랜덤]", category: "小壓克力, 盲抽", price: 4200, limit: 10 },
+            { name: "캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
+            { name: "어린이 캔뱃지 세트", category: "徽章", price: 9000, limit: 5 },
+            { name: "경단스튜디오 데이트 사진팩 [랜덤]", category: "拍立得, 盲抽", price: 5000, limit: 20 },
+            { name: "MFC 주재경 선수 슬로건", category: "手幅, 盲抽", price: 18000, limit: 5 },
+            { name: "주재경 글러브 키링", category: "吊飾", price: 21000, limit: 3 },
+            { name: "주재경의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
+            { name: "김단의 성장 기록 패키지", category: "照片組, 吊飾", price: 20000, limit: 3 },
+            { name: "주재경 트레이딩 카드팩 [랜덤]", category: "照片組, 盲抽", price: 4000, limit: 10 },
+            { name: "엽서 세트", category: "照片組", price: 18000, limit: 10 },
+            { name: "허그베어 필름 패키지 [부분 랜덤]", category: "四格, 盲抽", price: 10500, limit: 10 },
+            { name: "늑대 재경 쿠션", category: "抱枕", price: 30000, limit: 3 },
+            { name: "햄찌 단이 쿠션", category: "抱枕", price: 30000, limit: 3 },
+            { name: "LED 옥타곤 디오라마", category: "場景壓克力", price: 33000, limit: 10 },
+            { name: "김단 선생의 징명사진 패키지 [랜덤]", category: "吊飾, 盲抽", price: 7000, limit: 10 },
+            { name: "미니 쿠션 키링 [랜덤]", category: "吊飾, 盲抽", price: 7700, limit: 10 },
+            { name: "마우스 패드 패키지", category: "滑鼠墊", price: 30000, limit: 5 },
+            { name: "트라이엄프 포스터", category: "海報", price: 11000, limit: 3 },
+            { name: "주재경 빅 쿠션 커버", category: "抱枕", price: 38000, limit: 5 },
+            { name: "블랭킷", category: "毯子?", price: 30000, limit: 5 },
+            { name: "뽀시래기 MFC 선수복", category: "娃衣", price: 15000, limit: 3 },
+            { name: "뽀시래기 물리치료사 유니폼", category: "娃衣", price: 23000, limit: 3 },
+            { name: "뽀시래기 동물 모자 세트", category: "娃衣", price: 23000, limit: 3 },
+            { name: "팀블랙 더플백", category: "行李袋組", price: 105000, limit: 3 },
+            { name: "팀블랙 폴로 셔츠", category: "衣服", price: 62000, limit: 3 },
+            { name: "징크스 (1권/2권) 각", category: "書", price: 16200, limit: 3 }
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('productTableBody');
+            tbody.innerHTML = '';
+            
+            products.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-3 px-4 text-slate-500">${p.category}</td>
+                    <td class="py-3 px-4 text-right text-slate-600">${p.price.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-center">
+                        <input type="number" id="qty_${index}" min="0" max="${p.limit}" value="0" 
+                            oninput="calculateTotal()" 
+                            class="w-20 text-center border border-slate-300 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                    </td>
+                    <td class="py-3 px-4 text-center text-slate-400 text-xs">${p.limit}</td>
+                    <td id="subtotal_${index}" class="py-3 px-4 text-right font-semibold text-slate-700">0</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function calculateTotal() {
+            let grandTotal = 0;
+            products.forEach((p, index) => {
+                const qtyInput = document.getElementById(`qty_${index}`);
+                let qty = parseInt(qtyInput.value) || 0;
+                
+                // 限制不超過限購數量
+                if (qty > p.limit) {
+                    qty = p.limit;
+                    qtyInput.value = qty;
+                }
+                if (qty < 0) {
+                    qty = 0;
+                    qtyInput.value = qty;
+                }
+
+                const subtotal = qty * p.price;
+                grandTotal += subtotal;
+                
+                document.getElementById(`subtotal_${index}`).innerText = subtotal.toLocaleString();
+            });
+
+            document.getElementById('grandTotal').innerText = grandTotal.toLocaleString();
+        }
+
+        function resetForm() {
+            products.forEach((p, index) => {
+                document.getElementById(`qty_${index}`).value = 0;
+            });
+            calculateTotal();
+        }
+
+        // 初始化表格
+        renderTable();
+    </script>
+</body>
+</html>
