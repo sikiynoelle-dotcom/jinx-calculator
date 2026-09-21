@@ -67,6 +67,8 @@
                     <div>
                         <div class="text-xs text-indigo-600 font-medium">總計金額 (KRW)</div>
                         <div id="grandTotal" class="text-2xl font-bold text-indigo-900">0</div>
+                        <!-- 新增：台幣 TWD 金額（字體較小、顏色刷淡） -->
+                        <div id="twdTotal" class="text-xs text-slate-400 mt-0.5 font-normal">約 NT$ 0 (TWD)</div>
                     </div>
                     <!-- 按鈕群組：清除、匯入、匯出 Excel -->
                     <div class="flex flex-col gap-1.5">
@@ -125,11 +127,10 @@
     <script>
         const products = [
             { name: "트라이엄프 아크릴 스탠드", category: "壓克力立牌", price: 28000, limit: 5 },
-            // 將原本合併的項目拆分為 宰경 與 丹 兩項
             { name: "데이트 아크릴 스탠드 (재경)", category: "壓克力立牌", price: 19000, limit: 5, isSplit: true },
-            { name: "데이트 아크릴 스탠드 (단)", category: "壓克力立牌", price: 19000, limit: 5, isSplit: true, imgIndex: 1 },
+            { name: "데이트 아크릴 스탠드 (단)", category: "壓克力立牌", price: 19000, limit: 5, isSplit: true },
             { name: "어린이 아크릴 스탠드 (재경)", category: "壓克力立牌", price: 12000, limit: 5, isSplit: true },
-            { name: "어린이 아크릴 스탠드 (단)", category: "壓克力立牌", price: 12000, limit: 5, isSplit: true, imgIndex: 2 },
+            { name: "어린이 아크릴 스탠드 (단)", category: "壓克力立牌", price: 12000, limit: 5, isSplit: true },
             { name: "밍그래 아크릴 블록", category: "飯友(韓國限定)", price: 15000, limit: 3 },
             { name: "컬렉션 포토카드 ver.3 [랜덤]", category: "小卡, 盲抽", price: 5000, limit: 20 },
             { name: "컬렉션 미니 블록 [랜덤]", category: "小壓克力, 盲抽", price: 6500, limit: 5 },
@@ -164,20 +165,18 @@
         let currentGrandTotal = 0;
         let currentGift5w = 0;
         let currentGift10w = 0;
+        const KRW_TO_TWD_RATE = 0.02296; // Google 即期匯率參考值
 
         function renderTable() {
             const tbody = document.getElementById('productTableBody');
             tbody.innerHTML = '';
             
-            // 由於中間拆分了品項，圖片編號基於原本的順序對應調整
-            // 原本 idx=0: 001.jpg, idx=1 (데이트): 002.jpg, idx=2 (어린이): 003.jpg ...
-            // 這裡我們用一個對應的圖片檔案計算邏輯
             products.forEach((p, index) => {
                 let originalIndex = index;
                 if (p.name === "데이트 아크릴 스탠드 (단)") originalIndex = 1;
                 if (p.name === "어린이 아크릴 스탠드 (재경)") originalIndex = 2;
                 if (p.name === "어린이 아크릴 스탠드 (단)") originalIndex = 2;
-                if (index > 3) originalIndex = index - 2; // 因為多插入了 2 個項目
+                if (index > 3) originalIndex = index - 2;
 
                 const fileNum = String(originalIndex + 1).padStart(3, '0');
                 const imgFileName = `${fileNum}.jpg`;
@@ -228,7 +227,12 @@
                 document.getElementById(`subtotal_${index}`).innerText = subtotal.toLocaleString();
             });
 
+            // 更新總金額 (KRW)
             document.getElementById('grandTotal').innerText = currentGrandTotal.toLocaleString();
+
+            // 計算並更新總金額 (TWD)
+            const twdTotal = Math.round(currentGrandTotal * KRW_TO_TWD_RATE);
+            document.getElementById('twdTotal').innerText = `約 NT$ ${twdTotal.toLocaleString()} (TWD)`;
 
             currentGift5w = currentGrandTotal >= 50000 ? 1 : 0;
             currentGift10w = Math.floor(currentGrandTotal / 100000);
@@ -271,9 +275,12 @@
                 return;
             }
 
+            const twdTotal = Math.round(currentGrandTotal * KRW_TO_TWD_RATE);
+
             excelData.push({});
             excelData.push({ "商品名稱": "=== 結算資訊 ===" });
             excelData.push({ "商品名稱": "總金額 (KRW)", "類別": currentGrandTotal });
+            excelData.push({ "商品名稱": "總金額 (TWD 預估)", "類別": `NT$ ${twdTotal}` });
             excelData.push({ "商品名稱": "5萬滿額親密相卡", "類別": `${currentGift5w} 張` });
             excelData.push({ "商品名稱": "10萬滿額小卡+透卡組", "類別": `${currentGift10w} 組` });
 
